@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/ui/primitives";
-import { BrandMark } from "@/components/BrandMark";
 
 /** Centered auth card used by login / register / password screens. */
 export function AuthShell({
@@ -22,7 +22,7 @@ export function AuthShell({
         <div className="mx-auto w-full max-w-md">
           <div className="text-center">
             <Link href="/" className="inline-flex text-antique-gold" aria-label="Home">
-              <BrandMark className="h-10 w-10" />
+              <Image src="/images/al-madina-mark.png" alt="Al Madina Ittar" width={40} height={40} className="h-10 w-10 object-contain" />
             </Link>
             <p className="mt-6 overline">{eyebrow}</p>
             <h1 className="mt-4 font-display text-4xl text-ivory sm:text-5xl">{title}</h1>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wordmark } from "@/components/BrandMark";
+import Image from "next/image";
 import { useCartCount } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
 import { useSessionStore } from "@/store/session.store";
@@ -86,7 +86,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 sm:px-10 lg:px-16">
         <Link href="/" className="text-ivory" aria-label="Al Madina Ittar — home">
-          <Wordmark />
+          <Image src="/images/al-madina-mark.png" alt="Al Madina Ittar" width={36} height={54} className="h-9 w-auto object-contain" priority />
         </Link>
 
         <nav className="hidden items-center gap-9 md:flex">
