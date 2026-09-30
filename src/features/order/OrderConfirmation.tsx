@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/primitives";
 import { Spinner, ErrorState } from "@/components/ui/feedback";
 import { useOrder, useOrderPayments, useRetryPayment } from "@/hooks/queries/use-orders";
 import { useSessionStore } from "@/store/session.store";
+import { generateUuid } from "@/lib/uuid";
 import { OrderLines, ShippingBlock, TotalsBlock } from "./parts";
 import type { PaymentStatus } from "@/types/commerce";
 
@@ -49,11 +50,6 @@ const PAYMENT_COPY: Record<
     tone: "gold",
   },
 };
-
-const uuid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random()}`;
 
 export function OrderConfirmation({ id, email }: { id: string; email?: string }) {
   const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
@@ -106,7 +102,7 @@ export function OrderConfirmation({ id, email }: { id: string; email?: string })
           {canRetry && (
             <button
               type="button"
-              onClick={() => retry.mutate(uuid())}
+              onClick={() => retry.mutate(generateUuid())}
               disabled={retry.isPending}
               className="mt-8 inline-flex items-center gap-3 bg-antique-gold px-8 py-3.5 font-ui text-[0.78rem] uppercase tracking-[0.2em] text-rich-black transition-colors hover:bg-gold-bright disabled:opacity-60"
             >

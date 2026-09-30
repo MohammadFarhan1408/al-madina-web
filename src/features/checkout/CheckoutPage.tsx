@@ -19,6 +19,7 @@ import { useAddresses, useCreateOrder } from "@/hooks/queries/use-orders";
 import { addressesService } from "@/services/addresses.service";
 import { couponsService } from "@/services/coupons.service";
 import { getErrorMessage } from "@/lib/api/types";
+import { generateUuid } from "@/lib/uuid";
 import { formatAED } from "@/types/catalog";
 import type {
   Address,
@@ -46,31 +47,39 @@ export function CheckoutPage() {
 
   // One idempotency key per checkout attempt; resent unchanged on retry so a
   // double-submit dedupes to the same order server-side.
-  const idempotencyKey = useRef(
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random()}`,
-  ).current;
+  const idempotencyKey = useRef(generateUuid()).current;
 
   const [step, setStep] = useState(0);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | "new">("new");
+  const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
+    "new",
+  );
   const [delivery, setDelivery] = useState<DeliveryMethod>("standard");
   const [payment, setPayment] = useState<PaymentMethod>("cod");
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
 
   const form = useForm<CheckoutAddressForm>({
     resolver: zodResolver(checkoutAddressSchema),
-    defaultValues: { fullName: "", phone: "", address: "", city: "", email: "" },
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      address: "",
+      city: "",
+      email: "",
+    },
   });
 
   const summary = useMemo(() => computeCartSummary(items), [items]);
   const shipping = computeShipping(summary.subtotal, delivery);
-  const discount = coupon?.valid ? Math.min(coupon.discountAmount, summary.subtotal) : 0;
+  const discount = coupon?.valid
+    ? Math.min(coupon.discountAmount, summary.subtotal)
+    : 0;
   const total = summary.subtotal + shipping - discount;
 
   const savedAddresses = addresses ?? [];
   const usingSaved = selectedAddressId !== "new";
-  const selectedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
+  const selectedAddress = savedAddresses.find(
+    (a) => a.id === selectedAddressId,
+  );
 
   if (items.length === 0) {
     return (
@@ -98,7 +107,12 @@ export function CheckoutPage() {
       };
     }
     const v = form.getValues();
-    return { fullName: v.fullName, phone: v.phone, address: v.address, city: v.city };
+    return {
+      fullName: v.fullName,
+      phone: v.phone,
+      address: v.address,
+      city: v.city,
+    };
   }
 
   async function advanceFromAddress() {
@@ -111,7 +125,9 @@ export function CheckoutPage() {
     if (!isAuthenticated) {
       const email = form.getValues("email");
       if (!email) {
-        form.setError("email", { message: "Email is required for guest checkout" });
+        form.setError("email", {
+          message: "Email is required for guest checkout",
+        });
         return;
       }
     }
@@ -121,7 +137,9 @@ export function CheckoutPage() {
   async function placeOrder() {
     const shippingAddress = resolveShippingAddress();
     if (!shippingAddress) return;
-    const guestEmail = !isAuthenticated ? form.getValues("email") || undefined : undefined;
+    const guestEmail = !isAuthenticated
+      ? form.getValues("email") || undefined
+      : undefined;
 
     createOrder.mutate(
       {
@@ -153,7 +171,9 @@ export function CheckoutPage() {
               .catch(() => {});
           }
           clearCart();
-          const q = guestEmail ? `?email=${encodeURIComponent(guestEmail)}` : "";
+          const q = guestEmail
+            ? `?email=${encodeURIComponent(guestEmail)}`
+            : "";
           router.push(`/order/${order.id}${q}`);
         },
       },
@@ -204,7 +224,10 @@ export function CheckoutPage() {
               placing={createOrder.isPending}
               error={
                 createOrder.isError
-                  ? getErrorMessage(createOrder.error, "We couldn't place your order.")
+                  ? getErrorMessage(
+                      createOrder.error,
+                      "We couldn't place your order.",
+                    )
                   : null
               }
               onBack={() => setStep(2)}
@@ -220,7 +243,10 @@ export function CheckoutPage() {
           <h2 className="font-display text-xl text-ivory">Order Summary</h2>
           <ul className="mt-6 space-y-4">
             {items.map((i) => (
-              <li key={`${i.product.id}:${i.volumeMl ?? ""}`} className="flex gap-3">
+              <li
+                key={`${i.product.id}:${i.volumeMl ?? ""}`}
+                className="flex gap-3"
+              >
                 <ProductImage
                   src={i.product.images?.[0]}
                   alt={i.product.name}
@@ -228,7 +254,9 @@ export function CheckoutPage() {
                   className="h-16 w-14 shrink-0"
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-ui text-sm text-ivory">{i.product.name}</span>
+                  <span className="truncate font-ui text-sm text-ivory">
+                    {i.product.name}
+                  </span>
                   <span className="font-ui text-[0.68rem] uppercase tracking-[0.14em] text-stone">
                     Qty {i.quantity}
                     {i.volumeMl ? ` · ${i.volumeMl} ml` : ""}
@@ -256,8 +284,13 @@ export function CheckoutPage() {
             />
           </dl>
           <div className="mt-5 flex items-baseline justify-between border-t border-bronze/15 pt-5">
-            <span className="font-ui text-xs uppercase tracking-[0.24em] text-bronze">Total</span>
-            <Price amount={total} className="text-lg [&>span:first-child]:text-lg" />
+            <span className="font-ui text-xs uppercase tracking-[0.24em] text-bronze">
+              Total
+            </span>
+            <Price
+              amount={total}
+              className="text-lg [&>span:first-child]:text-lg"
+            />
           </div>
         </div>
       </aside>
@@ -265,7 +298,15 @@ export function CheckoutPage() {
   );
 }
 
-function SummaryRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function SummaryRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <div className="flex justify-between">
       <dt className="text-stone">{label}</dt>
@@ -274,7 +315,13 @@ function SummaryRow({ label, value, accent }: { label: string; value: string; ac
   );
 }
 
-function Stepper({ current, onJump }: { current: number; onJump: (i: number) => void }) {
+function Stepper({
+  current,
+  onJump,
+}: {
+  current: number;
+  onJump: (i: number) => void;
+}) {
   return (
     <ol className="flex items-center gap-3">
       {STEPS.map((label, i) => {
@@ -287,7 +334,11 @@ function Stepper({ current, onJump }: { current: number; onJump: (i: number) => 
               onClick={() => onJump(i)}
               disabled={i >= current}
               className={`flex items-center gap-2 font-ui text-xs uppercase tracking-[0.16em] transition-colors ${
-                active ? "text-antique-gold" : done ? "text-ivory/70 hover:text-ivory" : "text-smoke"
+                active
+                  ? "text-antique-gold"
+                  : done
+                    ? "text-ivory/70 hover:text-ivory"
+                    : "text-smoke"
               }`}
             >
               <span
@@ -303,7 +354,9 @@ function Stepper({ current, onJump }: { current: number; onJump: (i: number) => 
               </span>
               <span className="hidden sm:inline">{label}</span>
             </button>
-            {i < STEPS.length - 1 && <span className="h-px w-4 bg-bronze/30 sm:w-8" />}
+            {i < STEPS.length - 1 && (
+              <span className="h-px w-4 bg-bronze/30 sm:w-8" />
+            )}
           </li>
         );
       })}
@@ -337,7 +390,10 @@ function AddressStep({
       {!isAuthenticated && (
         <p className="mt-3 font-ui text-sm text-stone">
           Checking out as a guest.{" "}
-          <Link href="/login?next=/checkout" className="text-antique-gold hover:underline">
+          <Link
+            href="/login?next=/checkout"
+            className="text-antique-gold hover:underline"
+          >
             Sign in
           </Link>{" "}
           for saved addresses and faster checkout.
@@ -350,7 +406,9 @@ function AddressStep({
             <label
               key={a.id}
               className={`flex cursor-pointer items-start gap-3 border p-4 transition-colors ${
-                selectedAddressId === a.id ? "border-antique-gold" : "border-bronze/25 hover:border-bronze/50"
+                selectedAddressId === a.id
+                  ? "border-antique-gold"
+                  : "border-bronze/25 hover:border-bronze/50"
               }`}
             >
               <input
@@ -376,7 +434,9 @@ function AddressStep({
             type="button"
             onClick={() => onSelectAddress("new")}
             className={`w-full border border-dashed p-3 font-ui text-xs uppercase tracking-[0.16em] transition-colors ${
-              showForm ? "border-antique-gold text-antique-gold" : "border-bronze/30 text-ivory/70 hover:text-ivory"
+              showForm
+                ? "border-antique-gold text-antique-gold"
+                : "border-bronze/30 text-ivory/70 hover:text-ivory"
             }`}
           >
             + Add a new address
@@ -388,15 +448,37 @@ function AddressStep({
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           {!isAuthenticated && (
             <div className="sm:col-span-2">
-              <Field label="Email" type="email" placeholder="you@example.com" error={formState.errors.email?.message} {...register("email")} />
+              <Field
+                label="Email"
+                type="email"
+                placeholder="you@example.com"
+                error={formState.errors.email?.message}
+                {...register("email")}
+              />
             </div>
           )}
-          <Field label="Full name" error={formState.errors.fullName?.message} {...register("fullName")} />
-          <Field label="Phone" error={formState.errors.phone?.message} {...register("phone")} />
+          <Field
+            label="Full name"
+            error={formState.errors.fullName?.message}
+            {...register("fullName")}
+          />
+          <Field
+            label="Phone"
+            error={formState.errors.phone?.message}
+            {...register("phone")}
+          />
           <div className="sm:col-span-2">
-            <Field label="Address" error={formState.errors.address?.message} {...register("address")} />
+            <Field
+              label="Address"
+              error={formState.errors.address?.message}
+              {...register("address")}
+            />
           </div>
-          <Field label="City" error={formState.errors.city?.message} {...register("city")} />
+          <Field
+            label="City"
+            error={formState.errors.city?.message}
+            {...register("city")}
+          />
         </div>
       )}
 
@@ -426,7 +508,12 @@ function DeliveryStep({
   onNext: () => void;
 }) {
   const baseFree = subtotal >= 250;
-  const OPTIONS: { id: DeliveryMethod; title: string; sub: string; price: string }[] = [
+  const OPTIONS: {
+    id: DeliveryMethod;
+    title: string;
+    sub: string;
+    price: string;
+  }[] = [
     {
       id: "standard",
       title: "Standard",
@@ -445,10 +532,21 @@ function DeliveryStep({
       <h2 className="font-display text-3xl text-ivory">Delivery Method</h2>
       <div className="mt-6 space-y-3">
         {OPTIONS.map((o) => (
-          <OptionRow key={o.id} selected={value === o.id} onSelect={() => onChange(o.id)} title={o.title} sub={o.sub} trailing={o.price} />
+          <OptionRow
+            key={o.id}
+            selected={value === o.id}
+            onSelect={() => onChange(o.id)}
+            title={o.title}
+            sub={o.sub}
+            trailing={o.price}
+          />
         ))}
       </div>
-      <StepNav onBack={onBack} onNext={onNext} nextLabel="Continue to Payment" />
+      <StepNav
+        onBack={onBack}
+        onNext={onNext}
+        nextLabel="Continue to Payment"
+      />
     </div>
   );
 }
@@ -466,22 +564,36 @@ function PaymentStep({
   onNext: () => void;
 }) {
   const OPTIONS: { id: PaymentMethod; title: string; sub: string }[] = [
-    { id: "cod", title: "Cash on Delivery", sub: "Pay in cash when your order arrives" },
+    {
+      id: "cod",
+      title: "Cash on Delivery",
+      sub: "Pay in cash when your order arrives",
+    },
     { id: "card", title: "Card", sub: "Confirmed after you place the order" },
-    { id: "wallet", title: "Wallet", sub: "Confirmed after you place the order" },
+    {
+      id: "wallet",
+      title: "Wallet",
+      sub: "Confirmed after you place the order",
+    },
   ];
   return (
     <div>
       <h2 className="font-display text-3xl text-ivory">Payment Method</h2>
       <div className="mt-6 space-y-3">
         {OPTIONS.map((o) => (
-          <OptionRow key={o.id} selected={value === o.id} onSelect={() => onChange(o.id)} title={o.title} sub={o.sub} />
+          <OptionRow
+            key={o.id}
+            selected={value === o.id}
+            onSelect={() => onChange(o.id)}
+            title={o.title}
+            sub={o.sub}
+          />
         ))}
       </div>
       {value !== "cod" && (
         <p className="mt-4 font-ui text-xs leading-relaxed text-stone">
-          Card and wallet payments are confirmed securely after your order is placed —
-          you&apos;ll see the status update on the confirmation screen.
+          Card and wallet payments are confirmed securely after your order is
+          placed — you&apos;ll see the status update on the confirmation screen.
         </p>
       )}
       <StepNav onBack={onBack} onNext={onNext} nextLabel="Review Order" />
@@ -513,15 +625,24 @@ function ReviewStep({
 }) {
   return (
     <div>
-      <h2 className="font-display text-3xl text-ivory">Review &amp; Place Order</h2>
+      <h2 className="font-display text-3xl text-ivory">
+        Review &amp; Place Order
+      </h2>
 
       <div className="mt-6 grid gap-3 font-ui text-sm text-ivory/80">
         <p>
-          <span className="text-bronze">Delivery:</span> {delivery === "express" ? "Express (next day)" : "Standard (3–5 days)"}
+          <span className="text-bronze">Delivery:</span>{" "}
+          {delivery === "express"
+            ? "Express (next day)"
+            : "Standard (3–5 days)"}
         </p>
         <p>
           <span className="text-bronze">Payment:</span>{" "}
-          {payment === "cod" ? "Cash on Delivery" : payment === "card" ? "Card" : "Wallet"}
+          {payment === "cod"
+            ? "Cash on Delivery"
+            : payment === "card"
+              ? "Card"
+              : "Wallet"}
         </p>
       </div>
 
@@ -542,7 +663,9 @@ function ReviewStep({
           disabled={placing}
           className="flex flex-1 items-center justify-center gap-3 bg-antique-gold px-8 py-4 font-ui text-[0.78rem] uppercase tracking-[0.2em] text-rich-black transition-colors hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {placing && <Spinner className="h-4 w-4 border-rich-black/40 border-t-rich-black" />}
+          {placing && (
+            <Spinner className="h-4 w-4 border-rich-black/40 border-t-rich-black" />
+          )}
           {placing ? "Placing Order" : "Place Order"}
         </button>
         <button
@@ -576,7 +699,9 @@ function OptionRow({
       type="button"
       onClick={onSelect}
       className={`flex w-full items-center justify-between gap-4 border p-4 text-left transition-colors ${
-        selected ? "border-antique-gold" : "border-bronze/25 hover:border-bronze/50"
+        selected
+          ? "border-antique-gold"
+          : "border-bronze/25 hover:border-bronze/50"
       }`}
     >
       <span className="flex items-center gap-3">
@@ -585,19 +710,31 @@ function OptionRow({
             selected ? "border-antique-gold" : "border-smoke"
           }`}
         >
-          {selected && <span className="h-2 w-2 rounded-full bg-antique-gold" />}
+          {selected && (
+            <span className="h-2 w-2 rounded-full bg-antique-gold" />
+          )}
         </span>
         <span>
           <span className="block font-ui text-sm text-ivory">{title}</span>
           <span className="block font-ui text-xs text-stone">{sub}</span>
         </span>
       </span>
-      {trailing && <span className="font-ui text-sm text-antique-gold">{trailing}</span>}
+      {trailing && (
+        <span className="font-ui text-sm text-antique-gold">{trailing}</span>
+      )}
     </button>
   );
 }
 
-function StepNav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => void; nextLabel: string }) {
+function StepNav({
+  onBack,
+  onNext,
+  nextLabel,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  nextLabel: string;
+}) {
   return (
     <div className="mt-8 flex items-center gap-4">
       <button
@@ -657,7 +794,11 @@ function CouponField({
         <span className="font-ui text-xs uppercase tracking-[0.16em] text-antique-gold">
           {applied.coupon.code} applied
         </span>
-        <button type="button" onClick={() => onApply(null)} className="font-ui text-[0.68rem] uppercase tracking-[0.16em] text-ivory/60 hover:text-ivory">
+        <button
+          type="button"
+          onClick={() => onApply(null)}
+          className="font-ui text-[0.68rem] uppercase tracking-[0.16em] text-ivory/60 hover:text-ivory"
+        >
           Remove
         </button>
       </div>
@@ -672,9 +813,14 @@ function CouponField({
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Promo code"
-          className="min-w-0 flex-1 border border-bronze/30 bg-rich-black px-4 py-3 font-ui text-sm uppercase tracking-[0.1em] text-ivory placeholder:normal-case placeholder:tracking-normal placeholder:text-smoke focus:border-antique-gold focus:outline-none"
+          className="min-w-0 flex-1 border border-bronze/30 bg-rich-black px-4 py-3 font-ui text-sm uppercase tracking-widest text-ivory placeholder:normal-case placeholder:tracking-normal placeholder:text-smoke focus:border-antique-gold focus:outline-none"
         />
-        <button type="button" onClick={submit} disabled={loading || !code.trim()} className="border border-bronze/50 px-5 font-ui text-xs uppercase tracking-[0.16em] text-ivory transition-colors hover:border-antique-gold hover:text-antique-gold disabled:opacity-40">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={loading || !code.trim()}
+          className="border border-bronze/50 px-5 font-ui text-xs uppercase tracking-[0.16em] text-ivory transition-colors hover:border-antique-gold hover:text-antique-gold disabled:opacity-40"
+        >
           {loading ? "…" : "Apply"}
         </button>
       </div>
