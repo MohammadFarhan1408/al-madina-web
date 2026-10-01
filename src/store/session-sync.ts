@@ -104,8 +104,15 @@ export function startBackgroundSync() {
     removed.forEach((id) => void wishlistService.remove(id).catch((err) => console.error("Wishlist sync failed", err)));
   });
 
+  // Trailing debounce: a burst of +/- taps becomes one request carrying the
+  // final state. ponytail: a tab closed inside the window loses that last
+  // edit; add a pagehide flush if that matters.
+  let cartTimer: ReturnType<typeof setTimeout> | undefined;
   useCartStore.subscribe((state) => {
-    if (!useSessionStore.getState().isAuthenticated) return;
-    void cartService.sync(toLines(state.items)).catch((err) => console.error("Cart sync failed", err));
+    clearTimeout(cartTimer);
+    cartTimer = setTimeout(() => {
+      if (!useSessionStore.getState().isAuthenticated) return;
+      void cartService.sync(toLines(state.items)).catch((err) => console.error("Cart sync failed", err));
+    }, 500);
   });
 }
