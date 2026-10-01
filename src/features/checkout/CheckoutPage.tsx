@@ -29,7 +29,7 @@ import type {
   ShippingAddress,
 } from "@/types/commerce";
 import {
-  checkoutAddressSchema,
+  buildCheckoutAddressSchema,
   computeShipping,
   EXPRESS_SURCHARGE,
   type CheckoutAddressForm,
@@ -57,6 +57,10 @@ export function CheckoutPage() {
   const [payment, setPayment] = useState<PaymentMethod>("cod");
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
 
+  const checkoutAddressSchema = useMemo(
+    () => buildCheckoutAddressSchema(!isAuthenticated),
+    [isAuthenticated],
+  );
   const form = useForm<CheckoutAddressForm>({
     resolver: zodResolver(checkoutAddressSchema),
     defaultValues: {
@@ -120,17 +124,9 @@ export function CheckoutPage() {
       setStep(1);
       return;
     }
-    const ok = await form.trigger(["fullName", "phone", "address", "city"]);
-    // Guests must supply an email for the order confirmation.
-    if (!isAuthenticated) {
-      const email = form.getValues("email");
-      if (!email) {
-        form.setError("email", {
-          message: "Email is required for guest checkout",
-        });
-        return;
-      }
-    }
+    // Guest email requirement lives in the schema (requireEmail above), so
+    // one trigger covers it — no separate bypassable check.
+    const ok = await form.trigger(["fullName", "phone", "address", "city", "email"]);
     if (ok) setStep(1);
   }
 
