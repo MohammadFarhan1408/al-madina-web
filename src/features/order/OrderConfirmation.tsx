@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/primitives";
 import { Spinner, ErrorState } from "@/components/ui/feedback";
@@ -56,7 +57,29 @@ const PAYMENT_COPY: Record<
   },
 };
 
-export function OrderConfirmation({ id, email }: { id: string; email?: string }) {
+/** Guest lookup needs the checkout email; keep it per-order for the tab so a
+ * reload still works once the ?email= param is gone. */
+function useGuestEmail(id: string, fromUrl?: string) {
+  const key = `order-email:${id}`;
+  const read = () => {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null; // storage unavailable — URL param still works
+    }
+  };
+  const stored = useSyncExternalStore(() => () => {}, read, () => null);
+  useEffect(() => {
+    if (!fromUrl) return;
+    try {
+      sessionStorage.setItem(key, fromUrl);
+    } catch {}
+  }, [key, fromUrl]);
+  return fromUrl ?? stored ?? undefined;
+}
+
+export function OrderConfirmation({ id, email: emailParam }: { id: string; email?: string }) {
+  const email = useGuestEmail(id, emailParam);
   const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
   const { data: order, isLoading, isError, refetch } = useOrder(id, email);
   const retry = useRetryPayment(id);
