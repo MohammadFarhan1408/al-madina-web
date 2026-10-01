@@ -121,11 +121,13 @@ export type TransactionStatus =
 export interface Transaction {
   id: string;
   orderId: string;
-  provider: "cod" | "simulated";
+  provider: "cod" | "simulated" | "stripe";
   status: TransactionStatus;
   amount: number;
   currency: "AED";
   providerReference?: string;
+  /** Hosted gateways put the customer-facing payment page here. */
+  metadata?: { checkoutUrl?: string };
   failureReason?: string;
   createdAt: string;
   updatedAt: string;

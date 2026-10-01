@@ -83,11 +83,11 @@ export function useCreateOrder() {
   });
 }
 
-export function useRetryPayment(id: string) {
+export function useRetryPayment(id: string, email?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (idempotencyKey: string) =>
-      ordersService.retryPayment(id, idempotencyKey),
+      ordersService.retryPayment(id, idempotencyKey, email),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.order(id) });
       qc.invalidateQueries({ queryKey: queryKeys.orderPayments(id) });

@@ -16,6 +16,7 @@ import {
 } from "@/store/cart.store";
 import { useSessionStore } from "@/store/session.store";
 import { useAddresses, useCreateOrder } from "@/hooks/queries/use-orders";
+import { ordersService } from "@/services/orders.service";
 import { addressesService } from "@/services/addresses.service";
 import { computeShipping, EXPRESS_SURCHARGE } from "@/lib/shipping";
 import { CouponField } from "@/features/cart/CouponField";
@@ -151,7 +152,7 @@ export function CheckoutPage() {
         idempotencyKey,
       },
       {
-        onSuccess: (order) => {
+        onSuccess: async (order) => {
           // Persist a newly-entered address for signed-in shoppers (best effort).
           if (isAuthenticated && !usingSaved) {
             const v = form.getValues();
@@ -169,7 +170,14 @@ export function CheckoutPage() {
           const q = guestEmail
             ? `?email=${encodeURIComponent(guestEmail)}`
             : "";
-          router.push(`/order/${order.id}${q}`);
+          // Card/wallet pay on Stripe's hosted page; COD (or the simulated
+          // provider, which has none) goes straight to the confirmation.
+          const checkoutUrl =
+            payment === "cod"
+              ? undefined
+              : await ordersService.checkoutUrl(order.id, guestEmail).catch(() => undefined);
+          if (checkoutUrl) window.location.assign(checkoutUrl);
+          else router.push(`/order/${order.id}${q}`);
         },
       },
     );

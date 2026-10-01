@@ -82,7 +82,7 @@ export function OrderConfirmation({ id, email: emailParam }: { id: string; email
   const email = useGuestEmail(id, emailParam);
   const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
   const { data: order, isLoading, isError, refetch } = useOrder(id, email);
-  const retry = useRetryPayment(id);
+  const retry = useRetryPayment(id, email);
 
   if (isLoading) {
     return (
@@ -135,7 +135,14 @@ export function OrderConfirmation({ id, email: emailParam }: { id: string; email
           {canRetry && (
             <button
               type="button"
-              onClick={() => retry.mutate(generateUuid())}
+              onClick={() =>
+                retry.mutate(generateUuid(), {
+                  // Card/wallet: a new attempt means a new Stripe Checkout page.
+                  onSuccess: (txn) => {
+                    if (txn.metadata?.checkoutUrl) window.location.assign(txn.metadata.checkoutUrl);
+                  },
+                })
+              }
               disabled={retry.isPending}
               className="mt-8 inline-flex items-center gap-3 bg-antique-gold px-8 py-3.5 font-ui text-[0.78rem] uppercase tracking-[0.2em] text-rich-black transition-colors hover:bg-gold-bright disabled:opacity-60"
             >
