@@ -18,6 +18,14 @@ export interface User {
   updatedAt: string;
 }
 
+// Only the two fields the web UI exposes — promosEnabled and
+// orderUpdatesEnabled are the only ones currently enforced anywhere
+// (themeMode/currency/language have no corresponding UI on this storefront).
+export interface UserPreferences {
+  promosEnabled: boolean;
+  orderUpdatesEnabled: boolean;
+}
+
 export interface AuthResult {
   user: User;
   accessToken: string;

@@ -1,11 +1,14 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated } from "@/lib/api/types";
-import type { Notification, User } from "@/types/commerce";
+import type { Notification, User, UserPreferences } from "@/types/commerce";
 
 export const usersService = {
   updateProfile: (input: { fullName?: string; avatar?: string }) =>
     apiPatch<User>(endpoints.users.me, input),
+  getPreferences: () => apiGet<UserPreferences>(endpoints.users.preferences),
+  updatePreferences: (input: Partial<UserPreferences>) =>
+    apiPatch<UserPreferences>(endpoints.users.preferences, input),
 };
 
 export const notificationsService = {

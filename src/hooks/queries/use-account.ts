@@ -3,6 +3,7 @@
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query/keys";
@@ -10,13 +11,29 @@ import { usersService, notificationsService } from "@/services/account.service";
 import { addressesService } from "@/services/addresses.service";
 import { productsService } from "@/services/products.service";
 import { useSessionStore } from "@/store/session.store";
-import type { AddressInput } from "@/types/commerce";
+import type { AddressInput, UserPreferences } from "@/types/commerce";
 
 export function useUpdateProfile() {
   return useMutation({
     mutationFn: (input: { fullName?: string; avatar?: string }) =>
       usersService.updateProfile(input),
     onSuccess: (user) => useSessionStore.setState({ user }),
+  });
+}
+
+// ---- Preferences ----
+export function usePreferences() {
+  return useQuery({
+    queryKey: queryKeys.preferences,
+    queryFn: () => usersService.getPreferences(),
+  });
+}
+
+export function useUpdatePreferences() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<UserPreferences>) => usersService.updatePreferences(input),
+    onSuccess: (prefs) => qc.setQueryData(queryKeys.preferences, prefs),
   });
 }
 
