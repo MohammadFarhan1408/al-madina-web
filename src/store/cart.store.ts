@@ -25,7 +25,7 @@ export function linePrice(item: CartItem): number {
   return item.product.price;
 }
 
-function keyOf(productId: string, volumeMl?: number) {
+export function keyOf(productId: string, volumeMl?: number) {
   return `${productId}:${volumeMl ?? ""}`;
 }
 

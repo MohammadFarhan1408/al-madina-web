@@ -28,6 +28,17 @@ async function mergeGuestData() {
   }
 }
 
+// Pull the server cart on boot for an already-authenticated session, so a
+// page reload reflects the source of truth instead of stale localStorage.
+async function hydrateCart() {
+  try {
+    const { hydrateCartOnBoot } = await import("./session-sync");
+    await hydrateCartOnBoot();
+  } catch {
+    // non-fatal — local cart stays as last known
+  }
+}
+
 // Only user + isAuthenticated are persisted; tokens live in cookies.
 export const useSessionStore = create<SessionState>()(
   persist(
@@ -75,6 +86,7 @@ export const useSessionStore = create<SessionState>()(
         try {
           const user = await authService.me();
           set({ user, isAuthenticated: true, hydrated: true });
+          void hydrateCart();
         } catch {
           clearTokens();
           set({ user: null, isAuthenticated: false, hydrated: true });
