@@ -72,6 +72,7 @@ export const endpoints = {
     preferences: "/users/me/preferences",
   },
   contact: "/contact",
+  newsletter: "/newsletter",
 } as const;
 
 export const API_BASE_URL =

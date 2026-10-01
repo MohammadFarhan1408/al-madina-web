@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/primitives";
 import { Spinner, ErrorState } from "@/components/ui/feedback";
-import { useOrder, useOrderPayments, useRetryPayment } from "@/hooks/queries/use-orders";
+import {
+  useOrder,
+  useOrderPayments,
+  useRetryPayment,
+  isPaymentPollTimedOut,
+} from "@/hooks/queries/use-orders";
 import { useSessionStore } from "@/store/session.store";
 import { generateUuid } from "@/lib/uuid";
 import { OrderLines, ShippingBlock, TotalsBlock } from "./parts";
@@ -93,11 +98,16 @@ export function OrderConfirmation({ id, email }: { id: string; email?: string })
             Order {order.reference}
           </p>
 
-          {order.paymentStatus === "processing" && (
-            <div className="mt-6 flex items-center justify-center gap-2 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
-              <Spinner className="h-4 w-4" /> Checking status…
-            </div>
-          )}
+          {order.paymentStatus === "processing" &&
+            (isPaymentPollTimedOut(order) ? (
+              <p className="mt-6 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
+                Still confirming — this page will update once it settles.
+              </p>
+            ) : (
+              <div className="mt-6 flex items-center justify-center gap-2 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
+                <Spinner className="h-4 w-4" /> Checking status…
+              </div>
+            ))}
 
           {canRetry && (
             <button

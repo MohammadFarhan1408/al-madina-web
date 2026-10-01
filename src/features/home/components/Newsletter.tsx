@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Reveal } from "@/components/Reveal";
+import { newsletterService } from "@/services/newsletter.service";
+import { getErrorMessage } from "@/lib/api/types";
 
 export function Newsletter() {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const subscribe = useMutation({
+    mutationFn: (email: string) => newsletterService.subscribe(email),
+  });
 
-  // ponytail: no signup endpoint in Phase 1 — local acknowledgement only.
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) setSent(true);
+    if (email.trim()) subscribe.mutate(email.trim());
   };
 
   return (
@@ -37,7 +41,7 @@ export function Newsletter() {
         </Reveal>
 
         <Reveal delay={120}>
-          {sent ? (
+          {subscribe.isSuccess ? (
             <p className="mt-10 font-editorial text-xl italic text-champagne-soft">
               Thank you — welcome to the Maison.
             </p>
@@ -53,15 +57,22 @@ export function Newsletter() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
                 aria-label="Email address"
-                className="min-w-0 flex-1 border border-bronze/40 bg-transparent px-5 py-3.5 font-ui text-sm text-ivory placeholder:text-stone focus:border-antique-gold focus:outline-none"
+                disabled={subscribe.isPending}
+                className="min-w-0 flex-1 border border-bronze/40 bg-transparent px-5 py-3.5 font-ui text-sm text-ivory placeholder:text-stone focus:border-antique-gold focus:outline-none disabled:opacity-50"
               />
               <button
                 type="submit"
-                className="bg-antique-gold px-7 py-3.5 font-ui text-sm font-medium uppercase tracking-[0.18em] text-rich-black transition-colors hover:bg-gold-bright"
+                disabled={subscribe.isPending}
+                className="bg-antique-gold px-7 py-3.5 font-ui text-sm font-medium uppercase tracking-[0.18em] text-rich-black transition-colors hover:bg-gold-bright disabled:opacity-60"
               >
-                Subscribe
+                {subscribe.isPending ? "Subscribing…" : "Subscribe"}
               </button>
             </form>
+          )}
+          {subscribe.isError && (
+            <p className="mt-4 font-ui text-sm text-burgundy">
+              {getErrorMessage(subscribe.error, "Couldn't subscribe. Please try again.")}
+            </p>
           )}
         </Reveal>
       </div>
