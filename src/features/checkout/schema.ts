@@ -20,17 +20,3 @@ export function buildCheckoutAddressSchema(requireEmail: boolean) {
 }
 
 export type CheckoutAddressForm = z.infer<ReturnType<typeof buildCheckoutAddressSchema>>;
-
-const FREE_SHIPPING_THRESHOLD = 250;
-const FLAT_SHIPPING = 20;
-export const EXPRESS_SURCHARGE = 30;
-
-/** Display-only shipping preview. Backend recomputes authoritatively at order creation. */
-export function computeShipping(
-  subtotal: number,
-  delivery: "standard" | "express",
-): number {
-  const base =
-    subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
-  return base + (delivery === "express" ? EXPRESS_SURCHARGE : 0);
-}
