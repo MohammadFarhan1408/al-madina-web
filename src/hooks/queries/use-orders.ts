@@ -15,6 +15,27 @@ import type {
   OrderStatus,
 } from "@/types/commerce";
 
+// Card/wallet payments settle via an async gateway callback with no push
+// channel back to the client, so this polls — but only for a bounded window.
+// Past it, the gateway is either slow or never going to call back; the UI
+// falls back to "we'll email you" (see isPaymentPollTimedOut) instead of
+// polling forever.
+const PAYMENT_POLL_INTERVAL_MS = 2000;
+const PAYMENT_POLL_TIMEOUT_MS = 2 * 60 * 1000;
+
+/** How long an order has been sitting in its current payment status. */
+function msSincePaymentStatusChange(order: Order): number {
+  return Date.now() - new Date(order.updatedAt).getTime();
+}
+
+/** True once polling has given up on a still-processing payment. */
+export function isPaymentPollTimedOut(order: Order): boolean {
+  return (
+    order.paymentStatus === "processing" &&
+    msSincePaymentStatusChange(order) >= PAYMENT_POLL_TIMEOUT_MS
+  );
+}
+
 /** Single order, polling while payment is still settling (mirrors mobile). */
 export function useOrder(id: string, email?: string, initialData?: Order) {
   return useQuery({
@@ -23,8 +44,13 @@ export function useOrder(id: string, email?: string, initialData?: Order) {
     enabled: !!id,
     initialData,
     refetchOnMount: "always",
-    refetchInterval: (query) =>
-      query.state.data?.paymentStatus === "processing" ? 2000 : false,
+    refetchInterval: (query) => {
+      const order = query.state.data;
+      if (order?.paymentStatus !== "processing") return false;
+      return msSincePaymentStatusChange(order) < PAYMENT_POLL_TIMEOUT_MS
+        ? PAYMENT_POLL_INTERVAL_MS
+        : false;
+    },
   });
 }
 
