@@ -10,6 +10,7 @@ import { useSessionStore } from "@/store/session.store";
 
 const NAV = [
   { label: "Shop", href: "/shop" },
+  { label: "Categories", href: "/categories" },
   { label: "Collections", href: "/collections" },
   { label: "Fragrances", href: "/fragrance-families" },
   { label: "Our Story", href: "/about" },
