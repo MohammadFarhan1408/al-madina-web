@@ -7,13 +7,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AuthShell } from "./AuthShell";
+import { newPasswordSchema } from "./password";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/primitives";
 import { Spinner } from "@/components/ui/feedback";
 import { authService } from "@/services/auth.service";
 import { getErrorMessage } from "@/lib/api/types";
 
-const schema = z.object({ password: z.string().min(6, "At least 6 characters") });
+const schema = z.object({ password: newPasswordSchema });
 type Form = z.infer<typeof schema>;
 
 export function ResetPasswordPage() {
