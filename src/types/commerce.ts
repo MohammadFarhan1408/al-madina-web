@@ -27,9 +27,7 @@ export interface UserPreferences {
 }
 
 export interface AuthResult {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  user: User; // tokens are stripped by the proxy and kept in httpOnly cookies
 }
 
 // ---- Cart (server-reconciled shape from GET /cart) ----

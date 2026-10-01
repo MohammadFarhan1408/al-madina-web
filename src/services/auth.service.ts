@@ -9,8 +9,8 @@ export const authService = {
   signIn: (input: { email: string; password: string }) =>
     apiPost<AuthResult>(endpoints.auth.signIn, input),
 
-  signOut: (refreshToken: string) =>
-    apiPost<null>(endpoints.auth.signOut, { refreshToken }),
+  // The proxy supplies the refresh token from its httpOnly cookie.
+  signOut: () => apiPost<null>(endpoints.auth.signOut),
 
   me: () => apiGet<User>(endpoints.auth.me),
 

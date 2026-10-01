@@ -3,7 +3,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authService } from "@/services/auth.service";
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "@/lib/api/tokens";
 import type { User } from "@/types/commerce";
 
 interface SessionState {
@@ -39,17 +38,16 @@ async function hydrateCart() {
   }
 }
 
-// Only user + isAuthenticated are persisted; tokens live in cookies.
+// Only user + isAuthenticated are persisted; tokens live in httpOnly cookies.
 export const useSessionStore = create<SessionState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
       hydrated: false,
 
       signIn: async (email, password) => {
         const res = await authService.signIn({ email, password });
-        setTokens(res.accessToken, res.refreshToken);
         set({ user: res.user, isAuthenticated: true, hydrated: true });
         await mergeGuestData();
         return res.user;
@@ -57,29 +55,25 @@ export const useSessionStore = create<SessionState>()(
 
       signUp: async (fullName, email, password) => {
         const res = await authService.signUp({ fullName, email, password });
-        setTokens(res.accessToken, res.refreshToken);
         set({ user: res.user, isAuthenticated: true, hydrated: true });
         await mergeGuestData();
         return res.user;
       },
 
       signOut: async () => {
-        const refreshToken = getRefreshToken();
-        if (refreshToken) {
-          try {
-            await authService.signOut(refreshToken);
-          } catch {
-            // best-effort — clear locally regardless
-          }
+        try {
+          await authService.signOut();
+        } catch {
+          // best-effort — clear locally regardless
         }
-        clearTokens();
         set({ user: null, isAuthenticated: false, hydrated: true });
       },
 
       // Session restoration at boot: re-validate the cached user against the
       // backend so a stale user can't outlive its token.
       hydrateFromToken: async () => {
-        if (!getAccessToken() && !getRefreshToken()) {
+        // Cookies are httpOnly, so the persisted flag stands in for "had a session".
+        if (!get().isAuthenticated) {
           set({ user: null, isAuthenticated: false, hydrated: true });
           return;
         }
@@ -88,13 +82,11 @@ export const useSessionStore = create<SessionState>()(
           set({ user, isAuthenticated: true, hydrated: true });
           void hydrateCart();
         } catch {
-          clearTokens();
           set({ user: null, isAuthenticated: false, hydrated: true });
         }
       },
 
       setUnauthenticated: () => {
-        clearTokens();
         set({ user: null, isAuthenticated: false });
       },
     }),
