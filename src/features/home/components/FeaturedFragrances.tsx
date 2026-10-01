@@ -1,24 +1,14 @@
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
-import { featuredProducts } from "../data/home-content";
 import { productsServer } from "@/services/products.server";
 import { formatAED } from "@/types/catalog";
-import type { Product } from "@/types/catalog";
-
-// Live best-sellers when the catalogue is seeded; the curated static list is a
-// graceful fallback so the completed homepage never renders empty.
-async function getProducts(): Promise<Product[]> {
-  try {
-    const live = await productsServer.rail("best-sellers");
-    if (live && live.length) return live.slice(0, 5);
-  } catch {
-    // fall through to static
-  }
-  return featuredProducts;
-}
 
 export async function FeaturedFragrances() {
-  const products = await getProducts();
+  // No mock fallback: showing fake products with unlinkable ids is worse
+  // than omitting the section when the catalogue (or the API) isn't ready.
+  const live = await productsServer.rail("best-sellers").catch(() => null);
+  const products = (live ?? []).slice(0, 5);
+  if (products.length === 0) return null;
 
   return (
     <section
