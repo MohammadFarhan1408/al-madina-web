@@ -28,4 +28,5 @@ export const queryKeys = {
 
   addresses: ["addresses"] as const,
   notifications: ["notifications"] as const,
+  preferences: ["preferences"] as const,
 };

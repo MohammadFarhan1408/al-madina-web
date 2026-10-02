@@ -81,6 +81,7 @@ export async function ProductDetailView({ product }: { product: Product }) {
       <Container>
         <ProductReviews
           productId={product.id}
+          productName={product.name}
           rating={product.rating}
           reviewCount={product.reviewCount}
         />

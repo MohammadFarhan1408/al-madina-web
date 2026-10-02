@@ -1,7 +1,29 @@
 import { Reveal } from "@/components/Reveal";
-import { reviews } from "../data/home-content";
+import { productsServer } from "@/services/products.server";
+import type { Review } from "@/types/catalog";
 
-export function Reviews() {
+// Real reviews only — pulls the best-rated, most recent reviews off a
+// handful of best-selling products. No mock/fabricated testimonials: if the
+// catalogue doesn't have enough real reviews yet, the section just doesn't
+// render (see FeaturedFragrances for the same convention).
+async function getTopReviews(): Promise<Review[]> {
+  const bestSellers = await productsServer.rail("best-sellers").catch(() => []);
+  const pages = await Promise.all(
+    (bestSellers ?? [])
+      .slice(0, 6)
+      .map((p) => productsServer.reviews(p.id, 1, 5, 3600).catch(() => null)),
+  );
+  return pages
+    .flatMap((page) => page?.items ?? [])
+    .filter((r) => r.rating >= 4)
+    .sort((a, b) => b.rating - a.rating || +new Date(b.date) - +new Date(a.date))
+    .slice(0, 3);
+}
+
+export async function Reviews() {
+  const reviews = await getTopReviews();
+  if (reviews.length === 0) return null;
+
   return (
     <section className="border-t border-bronze/15 bg-rich-black py-28 sm:py-36">
       <div className="mx-auto max-w-[1600px] px-6 sm:px-10 lg:px-16">

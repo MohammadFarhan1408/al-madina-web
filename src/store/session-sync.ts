@@ -9,7 +9,7 @@
 import { cartService } from "@/services/cart.service";
 import { wishlistService } from "@/services/wishlist.service";
 import { productsService } from "@/services/products.service";
-import { useCartStore, type CartItem } from "./cart.store";
+import { useCartStore, keyOf, type CartItem } from "./cart.store";
 import { useWishlistStore } from "./wishlist.store";
 import { useSessionStore } from "./session.store";
 import type { CartLineInput, ReconciledCartItem } from "@/types/commerce";
@@ -20,6 +20,22 @@ function toLines(items: CartItem[]): CartLineInput[] {
     quantity: i.quantity,
     volumeMl: i.volumeMl,
   }));
+}
+
+/** Union two line sets by productId+volumeMl, summing quantities on overlap.
+ * Used so logging in on a second device — whose local cart is empty — merges
+ * into whatever's already on the server instead of overwriting it. */
+function mergeLines(
+  a: CartLineInput[],
+  b: { productId: string; quantity: number; volumeMl?: number }[],
+): CartLineInput[] {
+  const byKey = new Map<string, CartLineInput>();
+  for (const line of [...a, ...b]) {
+    const key = keyOf(line.productId, line.volumeMl);
+    const existing = byKey.get(key);
+    byKey.set(key, existing ? { ...existing, quantity: existing.quantity + line.quantity } : { ...line });
+  }
+  return [...byKey.values()];
 }
 
 /** Rebuild full-product cart items from the server's reconciled lines. */
@@ -43,11 +59,25 @@ export async function syncGuestDataOnLogin() {
   const serverIds = await wishlistService.getIds().catch(() => localIds);
   useWishlistStore.getState().replace(serverIds);
 
-  // Cart: push guest lines, adopt the server-reconciled result.
+  // Cart: merge guest lines into whatever's already on the server — logging
+  // in on a second device with an empty local cart must not wipe out items
+  // already saved from another (cart.module.ts's /cart/sync fully replaces
+  // the server cart with whatever it's given).
   const localItems = useCartStore.getState().items;
-  const reconciled = await cartService.sync(toLines(localItems)).catch(() => null);
+  const serverCart = await cartService.get().catch(() => null);
+  const merged = mergeLines(toLines(localItems), serverCart?.items ?? []);
+  const reconciled = await cartService.sync(merged).catch(() => null);
   if (!reconciled) return;
   const items = await reconciledToCartItems(reconciled.items);
+  useCartStore.getState().replace(items);
+}
+
+/** Pull the authoritative server cart on boot for an already-authenticated
+ * session (e.g. a page reload), rather than trusting stale localStorage. */
+export async function hydrateCartOnBoot() {
+  const cart = await cartService.get().catch(() => null);
+  if (!cart) return;
+  const items = await reconciledToCartItems(cart.items);
   useCartStore.getState().replace(items);
 }
 
@@ -66,12 +96,23 @@ export function startBackgroundSync() {
     const added = state.ids.filter((id) => !lastWishIds.includes(id));
     const removed = lastWishIds.filter((id) => !state.ids.includes(id));
     lastWishIds = state.ids;
-    added.forEach((id) => void wishlistService.add(id));
-    removed.forEach((id) => void wishlistService.remove(id));
+    // Best-effort: a failure here means local and server state have
+    // diverged for this one item. Logged rather than silently swallowed —
+    // startBackgroundSync has no UI to surface it through, and the next
+    // successful sync (login, or any later edit) naturally reconciles.
+    added.forEach((id) => void wishlistService.add(id).catch((err) => console.error("Wishlist sync failed", err)));
+    removed.forEach((id) => void wishlistService.remove(id).catch((err) => console.error("Wishlist sync failed", err)));
   });
 
+  // Trailing debounce: a burst of +/- taps becomes one request carrying the
+  // final state. ponytail: a tab closed inside the window loses that last
+  // edit; add a pagehide flush if that matters.
+  let cartTimer: ReturnType<typeof setTimeout> | undefined;
   useCartStore.subscribe((state) => {
-    if (!useSessionStore.getState().isAuthenticated) return;
-    void cartService.sync(toLines(state.items));
+    clearTimeout(cartTimer);
+    cartTimer = setTimeout(() => {
+      if (!useSessionStore.getState().isAuthenticated) return;
+      void cartService.sync(toLines(state.items)).catch((err) => console.error("Cart sync failed", err));
+    }, 500);
   });
 }

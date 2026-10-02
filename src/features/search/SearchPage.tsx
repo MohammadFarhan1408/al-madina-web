@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useDebounced } from "@/hooks/use-debounced";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Container, PageIntro } from "@/components/ui/primitives";
 import { ProductGrid } from "@/components/ui/ProductGrid";
@@ -21,7 +22,7 @@ export function SearchPage() {
   // Keep input in sync if the URL changes (e.g. trending chip click).
   useEffect(() => setInput(urlQuery), [urlQuery]);
 
-  const suggestions = useSuggest(input);
+  const suggestions = useSuggest(useDebounced(input));
   const trending = useTrending();
   const results = useSearch(urlQuery);
   const products = flattenProducts(results.data);

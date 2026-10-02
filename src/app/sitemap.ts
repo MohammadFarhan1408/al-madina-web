@@ -6,6 +6,7 @@ import { categoriesServer, collectionsServer } from "@/services/catalog.server";
 const STATIC_ROUTES = [
   "",
   "/shop",
+  "/categories",
   "/collections",
   "/fragrance-families",
   "/wishlist",

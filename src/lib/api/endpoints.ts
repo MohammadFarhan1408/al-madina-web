@@ -15,11 +15,6 @@ export const endpoints = {
     list: "/products",
     search: "/products/search",
     suggest: "/products/suggest",
-    featured: "/products/featured",
-    newArrivals: "/products/new-arrivals",
-    bestSellers: "/products/best-sellers",
-    signature: "/products/signature",
-    seasonal: "/products/seasonal",
     detail: (id: string) => `/products/${id}`,
     reviews: (id: string) => `/products/${id}/reviews`,
   },
@@ -72,6 +67,7 @@ export const endpoints = {
     preferences: "/users/me/preferences",
   },
   contact: "/contact",
+  newsletter: "/newsletter",
 } as const;
 
 export const API_BASE_URL =

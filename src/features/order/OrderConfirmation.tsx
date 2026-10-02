@@ -1,9 +1,15 @@
 "use client";
 
+import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/primitives";
 import { Spinner, ErrorState } from "@/components/ui/feedback";
-import { useOrder, useOrderPayments, useRetryPayment } from "@/hooks/queries/use-orders";
+import {
+  useOrder,
+  useOrderPayments,
+  useRetryPayment,
+  isPaymentPollTimedOut,
+} from "@/hooks/queries/use-orders";
 import { useSessionStore } from "@/store/session.store";
 import { generateUuid } from "@/lib/uuid";
 import { OrderLines, ShippingBlock, TotalsBlock } from "./parts";
@@ -51,10 +57,32 @@ const PAYMENT_COPY: Record<
   },
 };
 
-export function OrderConfirmation({ id, email }: { id: string; email?: string }) {
+/** Guest lookup needs the checkout email; keep it per-order for the tab so a
+ * reload still works once the ?email= param is gone. */
+function useGuestEmail(id: string, fromUrl?: string) {
+  const key = `order-email:${id}`;
+  const read = () => {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null; // storage unavailable — URL param still works
+    }
+  };
+  const stored = useSyncExternalStore(() => () => {}, read, () => null);
+  useEffect(() => {
+    if (!fromUrl) return;
+    try {
+      sessionStorage.setItem(key, fromUrl);
+    } catch {}
+  }, [key, fromUrl]);
+  return fromUrl ?? stored ?? undefined;
+}
+
+export function OrderConfirmation({ id, email: emailParam }: { id: string; email?: string }) {
+  const email = useGuestEmail(id, emailParam);
   const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
   const { data: order, isLoading, isError, refetch } = useOrder(id, email);
-  const retry = useRetryPayment(id);
+  const retry = useRetryPayment(id, email);
 
   if (isLoading) {
     return (
@@ -93,16 +121,28 @@ export function OrderConfirmation({ id, email }: { id: string; email?: string })
             Order {order.reference}
           </p>
 
-          {order.paymentStatus === "processing" && (
-            <div className="mt-6 flex items-center justify-center gap-2 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
-              <Spinner className="h-4 w-4" /> Checking status…
-            </div>
-          )}
+          {order.paymentStatus === "processing" &&
+            (isPaymentPollTimedOut(order) ? (
+              <p className="mt-6 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
+                Still confirming — this page will update once it settles.
+              </p>
+            ) : (
+              <div className="mt-6 flex items-center justify-center gap-2 font-ui text-xs uppercase tracking-[0.2em] text-bronze">
+                <Spinner className="h-4 w-4" /> Checking status…
+              </div>
+            ))}
 
           {canRetry && (
             <button
               type="button"
-              onClick={() => retry.mutate(generateUuid())}
+              onClick={() =>
+                retry.mutate(generateUuid(), {
+                  // Card/wallet: a new attempt means a new Stripe Checkout page.
+                  onSuccess: (txn) => {
+                    if (txn.metadata?.checkoutUrl) window.location.assign(txn.metadata.checkoutUrl);
+                  },
+                })
+              }
               disabled={retry.isPending}
               className="mt-8 inline-flex items-center gap-3 bg-antique-gold px-8 py-3.5 font-ui text-[0.78rem] uppercase tracking-[0.2em] text-rich-black transition-colors hover:bg-gold-bright disabled:opacity-60"
             >

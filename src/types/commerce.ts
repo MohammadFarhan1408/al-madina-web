@@ -18,10 +18,16 @@ export interface User {
   updatedAt: string;
 }
 
+// Only the two fields the web UI exposes — promosEnabled and
+// orderUpdatesEnabled are the only ones currently enforced anywhere
+// (themeMode/currency/language have no corresponding UI on this storefront).
+export interface UserPreferences {
+  promosEnabled: boolean;
+  orderUpdatesEnabled: boolean;
+}
+
 export interface AuthResult {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  user: User; // tokens are stripped by the proxy and kept in httpOnly cookies
 }
 
 // ---- Cart (server-reconciled shape from GET /cart) ----
@@ -115,11 +121,13 @@ export type TransactionStatus =
 export interface Transaction {
   id: string;
   orderId: string;
-  provider: "cod" | "simulated";
+  provider: "cod" | "simulated" | "stripe";
   status: TransactionStatus;
   amount: number;
   currency: "AED";
   providerReference?: string;
+  /** Hosted gateways put the customer-facing payment page here. */
+  metadata?: { checkoutUrl?: string };
   failureReason?: string;
   createdAt: string;
   updatedAt: string;

@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Container, PageIntro } from "@/components/ui/primitives";
 import { ProductGrid } from "@/components/ui/ProductGrid";
-import { useProducts, flattenProducts } from "@/hooks/queries/use-catalog";
+import { useProducts, useCategories, flattenProducts } from "@/hooks/queries/use-catalog";
 import type { ProductSort } from "@/services/products.service";
 import type { ScentFamily } from "@/types/catalog";
 
@@ -44,14 +44,27 @@ export function ShopPage({
   const family = (lockedFamily ?? params.get("family")) as ScentFamily | null;
   const sort = (params.get("sort") as ProductSort) || "featured";
   const inStock = params.get("inStock") === "true";
+  const categoryId = params.get("categoryId") ?? undefined;
+  const minPrice = params.get("minPrice") ?? undefined;
+  const maxPrice = params.get("maxPrice") ?? undefined;
+
+  const categories = useCategories();
+
+  // Committed on blur, not per keystroke — a price filter re-queries the
+  // product list, unlike the cheap suggest-as-you-type search box.
+  const [minPriceInput, setMinPriceInput] = useState(minPrice ?? "");
+  const [maxPriceInput, setMaxPriceInput] = useState(maxPrice ?? "");
 
   const filters = useMemo(
     () => ({
       family: family ?? undefined,
       sort,
       inStock: inStock || undefined,
+      categoryId,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
     }),
-    [family, sort, inStock],
+    [family, sort, inStock, categoryId, minPrice, maxPrice],
   );
 
   const query = useProducts(filters);
@@ -96,7 +109,7 @@ export function ShopPage({
             </div>
           )}
 
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-5">
             <label className="flex cursor-pointer items-center gap-2 font-ui text-xs uppercase tracking-[0.16em] text-ivory/80">
               <input
                 type="checkbox"
@@ -106,6 +119,52 @@ export function ShopPage({
               />
               In stock
             </label>
+
+            <label className="flex items-center gap-2">
+              <span className="font-ui text-xs uppercase tracking-[0.16em] text-bronze">
+                Category
+              </span>
+              <select
+                value={categoryId ?? ""}
+                onChange={(e) => setParam("categoryId", e.target.value || null)}
+                className="border border-bronze/30 bg-charcoal px-3 py-2 font-ui text-xs text-ivory outline-none focus:border-antique-gold"
+              >
+                <option value="">All</option>
+                {(categories.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex items-center gap-2">
+              <span className="font-ui text-xs uppercase tracking-[0.16em] text-bronze">
+                AED
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                placeholder="Min"
+                value={minPriceInput}
+                onChange={(e) => setMinPriceInput(e.target.value)}
+                onBlur={() => setParam("minPrice", minPriceInput || null)}
+                className="w-20 border border-bronze/30 bg-charcoal px-3 py-2 font-ui text-xs text-ivory outline-none focus:border-antique-gold"
+              />
+              <span className="text-bronze">–</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                placeholder="Max"
+                value={maxPriceInput}
+                onChange={(e) => setMaxPriceInput(e.target.value)}
+                onBlur={() => setParam("maxPrice", maxPriceInput || null)}
+                className="w-20 border border-bronze/30 bg-charcoal px-3 py-2 font-ui text-xs text-ivory outline-none focus:border-antique-gold"
+              />
+            </div>
+
             <label className="flex items-center gap-2">
               <span className="font-ui text-xs uppercase tracking-[0.16em] text-bronze">
                 Sort

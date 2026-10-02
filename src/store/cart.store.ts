@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product } from "@/types/catalog";
+import { computeShipping } from "@/lib/shipping";
 
 // Guest-first cart, persisted to localStorage. Holds full product + qty so the
 // cart renders offline; the server RE-PRICES and reconciles at /cart and
@@ -13,9 +14,6 @@ export interface CartItem {
   volumeMl?: number; // selected variant size, threaded into cart/order lines
 }
 
-const FREE_SHIPPING_THRESHOLD = 250;
-const FLAT_SHIPPING = 20;
-
 /** Resolve the price for a line, honouring the selected variant. */
 export function linePrice(item: CartItem): number {
   if (item.volumeMl) {
@@ -25,7 +23,7 @@ export function linePrice(item: CartItem): number {
   return item.product.price;
 }
 
-function keyOf(productId: string, volumeMl?: number) {
+export function keyOf(productId: string, volumeMl?: number) {
   return `${productId}:${volumeMl ?? ""}`;
 }
 
@@ -89,7 +87,6 @@ export const useCartCount = () =>
 /** Display-only summary — server totals win at checkout. */
 export function computeCartSummary(items: CartItem[]) {
   const subtotal = items.reduce((sum, i) => sum + linePrice(i) * i.quantity, 0);
-  const shipping =
-    subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
+  const shipping = computeShipping(subtotal);
   return { subtotal, shipping, total: subtotal + shipping };
 }

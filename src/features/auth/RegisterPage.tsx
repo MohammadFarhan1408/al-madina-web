@@ -10,12 +10,13 @@ import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/primitives";
 import { Spinner } from "@/components/ui/feedback";
 import { useSessionStore } from "@/store/session.store";
+import { newPasswordSchema } from "./password";
 import { getErrorMessage } from "@/lib/api/types";
 
 const schema = z.object({
   fullName: z.string().min(2, "Enter your full name"),
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "At least 6 characters"),
+  password: newPasswordSchema,
 });
 type Form = z.infer<typeof schema>;
 

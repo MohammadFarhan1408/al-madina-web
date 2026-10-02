@@ -12,8 +12,7 @@ import {
   type CartItem,
 } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
-import { couponsService } from "@/services/coupons.service";
-import { getErrorMessage } from "@/lib/api/types";
+import { CouponField } from "@/features/cart/CouponField";
 import { formatAED } from "@/types/catalog";
 import type { CouponPreview } from "@/types/commerce";
 
@@ -58,11 +57,13 @@ export function CartPage() {
             <div className="border border-bronze/20 bg-charcoal/40 p-8">
               <h2 className="font-display text-2xl text-ivory">Order Summary</h2>
 
-              <CouponField
-                subtotal={summary.subtotal}
-                applied={coupon}
-                onApply={setCoupon}
-              />
+              <div className="mt-6">
+                <CouponField
+                  subtotal={summary.subtotal}
+                  applied={coupon}
+                  onApply={setCoupon}
+                />
+              </div>
 
               <dl className="mt-8 space-y-4 border-t border-bronze/15 pt-6 font-ui text-sm">
                 <Row label="Subtotal" value={formatAED(summary.subtotal)} />
@@ -198,80 +199,5 @@ function CartLine({ item }: { item: CartItem }) {
         </div>
       </div>
     </li>
-  );
-}
-
-function CouponField({
-  subtotal,
-  applied,
-  onApply,
-}: {
-  subtotal: number;
-  applied: CouponPreview | null;
-  onApply: (c: CouponPreview | null) => void;
-}) {
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    const trimmed = code.trim().toUpperCase();
-    if (!trimmed) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await couponsService.validate(trimmed, subtotal);
-      if (res.valid) {
-        onApply(res);
-        setCode("");
-      } else {
-        setError("This code isn't valid.");
-      }
-    } catch (err) {
-      onApply(null);
-      setError(getErrorMessage(err, "This code isn't valid for your bag."));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (applied?.valid) {
-    return (
-      <div className="mt-6 flex items-center justify-between border border-antique-gold/40 bg-antique-gold/5 px-4 py-3">
-        <span className="font-ui text-xs uppercase tracking-[0.16em] text-antique-gold">
-          {applied.coupon.code} applied
-        </span>
-        <button
-          type="button"
-          onClick={() => onApply(null)}
-          className="font-ui text-[0.68rem] uppercase tracking-[0.16em] text-ivory/60 hover:text-ivory"
-        >
-          Remove
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-6">
-      <div className="flex gap-2">
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="Promo code"
-          className="min-w-0 flex-1 border border-bronze/30 bg-rich-black px-4 py-3 font-ui text-sm uppercase tracking-[0.1em] text-ivory placeholder:normal-case placeholder:tracking-normal placeholder:text-smoke focus:border-antique-gold focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={submit}
-          disabled={loading || !code.trim()}
-          className="border border-bronze/50 px-5 font-ui text-xs uppercase tracking-[0.16em] text-ivory transition-colors hover:border-antique-gold hover:text-antique-gold disabled:opacity-40"
-        >
-          {loading ? "…" : "Apply"}
-        </button>
-      </div>
-      {error && <p className="mt-2 font-ui text-xs text-burgundy">{error}</p>}
-    </div>
   );
 }
