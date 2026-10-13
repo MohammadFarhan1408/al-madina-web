@@ -1,19 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useOrders } from "@/hooks/queries/use-orders";
-import { Spinner, EmptyState } from "@/components/ui/feedback";
+import { Spinner, EmptyState, ErrorState } from "@/components/ui/feedback";
 import { StatusBadge, PaymentStatusBadge, statusTone } from "@/features/order/parts";
 import { formatAED } from "@/types/catalog";
+import { chip } from "@/components/ui/primitives";
+import type { OrderStatus } from "@/types/commerce";
+
+const FILTERS: OrderStatus[] = ["processing", "shipped", "delivered", "cancelled"];
 
 export function AccountOrders() {
-  const query = useOrders();
+  const [status, setStatus] = useState<OrderStatus | undefined>();
+  const query = useOrders(status);
   const orders = query.data?.pages.flatMap((p) => p.items) ?? [];
 
-  if (query.isLoading) {
+  if (query.isLoading && !status) {
     return <div className="py-16 text-center"><Spinner className="h-7 w-7" /></div>;
   }
-  if (orders.length === 0) {
+  if (orders.length === 0 && !status) {
     return (
       <EmptyState
         title="No orders yet"
@@ -26,6 +32,26 @@ export function AccountOrders() {
   return (
     <div>
       <h2 className="font-display text-2xl text-ivory">Your Orders</h2>
+      <div className="mt-6 flex flex-wrap gap-2">
+        {[undefined, ...FILTERS].map((s) => (
+          <button
+            key={s ?? "all"}
+            type="button"
+            aria-pressed={status === s}
+            onClick={() => setStatus(s)}
+            className={chip(status === s)}
+          >
+            {s ?? "All"}
+          </button>
+        ))}
+      </div>
+      {query.isLoading ? (
+        <div className="py-16 text-center"><Spinner className="h-7 w-7" /></div>
+      ) : query.isError ? (
+        <ErrorState onRetry={() => query.refetch()} message="We couldn't load your orders." />
+      ) : orders.length === 0 ? (
+        <p className="py-16 text-center font-ui text-sm text-stone">No {status} orders.</p>
+      ) : (
       <ul className="mt-6 space-y-4">
         {orders.map((o) => (
           <li key={o.id}>
@@ -55,6 +81,7 @@ export function AccountOrders() {
           </li>
         ))}
       </ul>
+      )}
 
       {query.hasNextPage && (
         <div className="mt-8 flex justify-center">
