@@ -1,18 +1,13 @@
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
-import { productsServer } from "@/services/products.server";
 import { formatAED } from "@/types/catalog";
+import { getSpotlight } from "../spotlight";
 
 // The bottle render is brand art; used when the product has no photography.
 const RENDER = "/animations/oud-black/desktop/frame-125.jpg";
 
 export async function EditorialFeature() {
-  // Spotlight the first signature fragrance; fall back to the top best-seller.
-  // No mock fallback — omit the section rather than link to a fake product.
-  const signature = await productsServer.rail("signature").catch(() => null);
-  const hero =
-    signature?.[0] ??
-    (await productsServer.rail("best-sellers").catch(() => null))?.[0];
+  const hero = await getSpotlight();
   if (!hero) return null;
 
   return (
@@ -21,7 +16,7 @@ export async function EditorialFeature() {
       className="relative overflow-hidden border-t border-bronze/15 bg-obsidian"
     >
       <div className="mx-auto grid max-w-[1600px] items-stretch gap-10 px-6 py-24 sm:px-10 lg:grid-cols-2 lg:gap-0 lg:px-0 lg:py-0">
-        {/* image side — the real bottle render */}
+        {/* image side — the product's own photography */}
         <div className="relative order-2 min-h-[24rem] overflow-hidden lg:order-1 lg:min-h-[42rem]">
           <img
             src={hero.images[0] ?? RENDER}

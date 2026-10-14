@@ -1,18 +1,25 @@
 import { Reveal } from "@/components/Reveal";
-import { notePyramid } from "../data/home-content";
+import { getSpotlight, noteTiers } from "../spotlight";
 
-export function FragranceNotes() {
+// Brand bottle render, used when the product has no photography yet.
+const RENDER = "/animations/oud-black/desktop/frame-090.jpg";
+
+export async function FragranceNotes() {
+  const product = await getSpotlight();
+  const tiers = noteTiers(product?.notes ?? []);
+  if (!product || tiers.length === 0) return null;
+
   return (
     <section
       id="notes"
       className="relative overflow-hidden border-t border-bronze/15 bg-obsidian py-28 sm:py-36"
     >
-      {/* faint bottle render keeps the composition connected to the hero */}
+      {/* faint product image keeps the composition connected to the hero */}
       <img
-        src="/animations/oud-black/desktop/frame-090.jpg"
+        src={product.images[0] ?? RENDER}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -right-24 top-1/2 hidden w-[46rem] max-w-[55%] -translate-y-1/2 object-contain opacity-25 lg:block"
+        className="pointer-events-none absolute -right-24 top-1/2 hidden w-184 max-w-[55%] -translate-y-1/2 object-contain opacity-25 lg:block"
         style={{
           maskImage: "linear-gradient(90deg, transparent, #000 55%)",
           WebkitMaskImage: "linear-gradient(90deg, transparent, #000 55%)",
@@ -22,13 +29,13 @@ export function FragranceNotes() {
         <Reveal>
           <p className="overline">The Composition</p>
           <h2 className="mt-5 max-w-2xl font-display text-4xl leading-[1.02] text-ivory sm:text-6xl">
-            How <span className="italic text-antique-gold">Oud Black</span>{" "}
+            How <span className="italic text-antique-gold">{product.name}</span>{" "}
             unfolds
           </h2>
         </Reveal>
 
         <div className="mt-16 max-w-2xl divide-y divide-bronze/20 border-y border-bronze/20">
-          {notePyramid.map((tier, i) => (
+          {tiers.map((tier, i) => (
             <Reveal
               key={tier.tier}
               delay={i * 120}
