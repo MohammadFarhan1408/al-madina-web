@@ -48,8 +48,8 @@ export async function FeaturedFragrances() {
                 </span>
 
                 <span className="min-w-0">
-                  <span className="flex items-center gap-3">
-                    <span className="truncate font-display text-2xl text-ivory transition-colors group-hover:text-antique-gold sm:text-4xl">
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <span className="font-display text-2xl text-ivory transition-colors group-hover:text-antique-gold sm:truncate sm:text-4xl">
                       {p.name}
                     </span>
                     {p.badge && (
@@ -71,9 +71,17 @@ export async function FeaturedFragrances() {
                   <span className="block font-ui text-base text-ivory">
                     {formatAED(p.price)}
                   </span>
-                  <span className="mt-1 block font-ui text-xs text-bronze">
-                    ★ {p.rating.toFixed(1)} · {p.reviewCount}
-                  </span>
+                  {p.reviewCount > 0 && (
+                    <span className="mt-1 block font-ui text-xs text-bronze">
+                      <span aria-hidden>
+                        ★ {p.rating.toFixed(1)} · {p.reviewCount}
+                      </span>
+                      <span className="sr-only">
+                        Rated {p.rating.toFixed(1)} out of 5 from {p.reviewCount}{" "}
+                        {p.reviewCount === 1 ? "review" : "reviews"}
+                      </span>
+                    </span>
+                  )}
                 </span>
               </Link>
             </Reveal>

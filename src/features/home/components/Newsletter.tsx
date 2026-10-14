@@ -42,7 +42,7 @@ export function Newsletter() {
 
         <Reveal delay={120}>
           {subscribe.isSuccess ? (
-            <p className="mt-10 font-editorial text-xl italic text-champagne-soft">
+            <p role="status" className="mt-10 font-editorial text-xl italic text-champagne-soft">
               Thank you — welcome to the Maison.
             </p>
           ) : (
@@ -70,7 +70,7 @@ export function Newsletter() {
             </form>
           )}
           {subscribe.isError && (
-            <p className="mt-4 font-ui text-sm text-burgundy">
+            <p role="alert" className="mt-4 font-ui text-sm text-burgundy">
               {getErrorMessage(subscribe.error, "Couldn't subscribe. Please try again.")}
             </p>
           )}
