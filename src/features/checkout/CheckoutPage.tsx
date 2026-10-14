@@ -104,7 +104,14 @@ export function CheckoutPage() {
       return {
         fullName: selectedAddress.fullName,
         phone: selectedAddress.phone,
-        address: [selectedAddress.addressLine, selectedAddress.landmark]
+        // Orders only store {address, city}; fold the rest of the saved
+        // address in so the courier still sees it.
+        address: [
+          selectedAddress.addressLine,
+          selectedAddress.landmark,
+          selectedAddress.state,
+          selectedAddress.postalCode,
+        ]
           .filter(Boolean)
           .join(", "),
         city: selectedAddress.city,
@@ -422,6 +429,7 @@ function AddressStep({
                 className="mt-1 accent-antique-gold"
               />
               <span className="font-ui text-sm text-ivory/85">
+                {a.label && <span className="text-antique-gold">{a.label} · </span>}
                 <span className="text-ivory">{a.fullName}</span> · {a.phone}
                 <br />
                 {a.addressLine}, {a.city}
