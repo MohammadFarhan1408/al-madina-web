@@ -135,14 +135,7 @@ export function OrderConfirmation({ id, email: emailParam }: { id: string; email
           {canRetry && (
             <button
               type="button"
-              onClick={() =>
-                retry.mutate(generateUuid(), {
-                  // Card/wallet: a new attempt means a new Stripe Checkout page.
-                  onSuccess: (txn) => {
-                    if (txn.metadata?.checkoutUrl) window.location.assign(txn.metadata.checkoutUrl);
-                  },
-                })
-              }
+              onClick={() => retry.mutate(generateUuid())}
               disabled={retry.isPending}
               className="mt-8 inline-flex items-center gap-3 bg-antique-gold px-8 py-3.5 font-ui text-[0.78rem] uppercase tracking-[0.2em] text-rich-black transition-colors hover:bg-gold-bright disabled:opacity-60"
             >

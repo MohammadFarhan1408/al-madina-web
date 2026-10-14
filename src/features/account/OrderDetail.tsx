@@ -16,11 +16,15 @@ import {
   PaymentStatusBadge,
   statusTone,
 } from "@/features/order/parts";
+import { statusDates } from "@/features/order/timeline";
 import { WriteReview } from "./WriteReview";
 import { generateUuid } from "@/lib/uuid";
 import type { OrderStatus } from "@/types/commerce";
 
 const TRACK: OrderStatus[] = ["processing", "shipped", "delivered"];
+
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-AE", { day: "numeric", month: "short" });
 
 export function OrderDetail({ id }: { id: string }) {
   const { data: order, isLoading, isError, refetch } = useOrder(id);
@@ -45,6 +49,7 @@ export function OrderDetail({ id }: { id: string }) {
 
   const cancelled = order.status === "cancelled";
   const currentStep = TRACK.indexOf(order.status);
+  const dates = statusDates(order);
   const canRetry =
     order.paymentStatus === "failed" || order.paymentStatus === "cancelled";
   const delivered = order.status === "delivered";
@@ -80,7 +85,8 @@ export function OrderDetail({ id }: { id: string }) {
       {/* Tracking timeline */}
       {cancelled ? (
         <div className="border border-burgundy/40 bg-burgundy/10 px-5 py-4 font-ui text-sm text-champagne-soft">
-          This order was cancelled.
+          This order was cancelled
+          {dates.cancelled ? ` on ${shortDate(dates.cancelled)}` : ""}.
         </div>
       ) : (
         <ol className="flex items-center">
@@ -106,6 +112,11 @@ export function OrderDetail({ id }: { id: string }) {
                   >
                     {step}
                   </span>
+                  {done && dates[step] && (
+                    <span className="font-ui text-[0.6rem] text-stone">
+                      {shortDate(dates[step])}
+                    </span>
+                  )}
                 </div>
                 {i < TRACK.length - 1 && (
                   <span

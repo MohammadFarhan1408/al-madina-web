@@ -88,7 +88,12 @@ export function useRetryPayment(id: string, email?: string) {
   return useMutation({
     mutationFn: (idempotencyKey: string) =>
       ordersService.retryPayment(id, idempotencyKey, email),
-    onSuccess: () => {
+    onSuccess: (txn) => {
+      // Card/wallet: a new attempt means a new Stripe Checkout page.
+      if (txn.metadata?.checkoutUrl) {
+        window.location.assign(txn.metadata.checkoutUrl);
+        return;
+      }
       qc.invalidateQueries({ queryKey: queryKeys.order(id) });
       qc.invalidateQueries({ queryKey: queryKeys.orderPayments(id) });
     },
