@@ -19,7 +19,7 @@ import { useAddresses, useCreateOrder } from "@/hooks/queries/use-orders";
 import { ordersService } from "@/services/orders.service";
 import { addressesService } from "@/services/addresses.service";
 import { computeShipping, EXPRESS_SURCHARGE } from "@/lib/shipping";
-import { CouponField } from "@/features/cart/CouponField";
+import { CouponField, useAppliedCoupon } from "@/features/cart/CouponField";
 import { getErrorMessage } from "@/lib/api/types";
 import { generateUuid } from "@/lib/uuid";
 import { formatAED } from "@/types/catalog";
@@ -55,7 +55,6 @@ export function CheckoutPage() {
   );
   const [delivery, setDelivery] = useState<DeliveryMethod>("standard");
   const [payment, setPayment] = useState<PaymentMethod>("cod");
-  const [coupon, setCoupon] = useState<CouponPreview | null>(null);
 
   const checkoutAddressSchema = useMemo(
     () => buildCheckoutAddressSchema(!isAuthenticated),
@@ -73,6 +72,11 @@ export function CheckoutPage() {
   });
 
   const summary = useMemo(() => computeCartSummary(items), [items]);
+  const {
+    coupon,
+    apply: setCoupon,
+    error: couponError,
+  } = useAppliedCoupon(summary.subtotal);
   const shipping = computeShipping(summary.subtotal, delivery);
   const discount = coupon?.valid
     ? Math.min(coupon.discountAmount, summary.subtotal)
@@ -229,6 +233,7 @@ export function CheckoutPage() {
               subtotal={summary.subtotal}
               coupon={coupon}
               onCoupon={setCoupon}
+              couponError={couponError}
               payment={payment}
               delivery={delivery}
               placing={createOrder.isPending}
@@ -518,7 +523,7 @@ function DeliveryStep({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const baseFree = subtotal >= 250;
+  const base = computeShipping(subtotal);
   const OPTIONS: {
     id: DeliveryMethod;
     title: string;
@@ -529,7 +534,7 @@ function DeliveryStep({
       id: "standard",
       title: "Standard",
       sub: "3–5 business days",
-      price: baseFree ? "Complimentary" : formatAED(20),
+      price: base === 0 ? "Complimentary" : formatAED(base),
     },
     {
       id: "express",
@@ -617,6 +622,7 @@ function ReviewStep({
   subtotal,
   coupon,
   onCoupon,
+  couponError,
   payment,
   delivery,
   placing,
@@ -627,6 +633,7 @@ function ReviewStep({
   subtotal: number;
   coupon: CouponPreview | null;
   onCoupon: (c: CouponPreview | null) => void;
+  couponError: string | null;
   payment: PaymentMethod;
   delivery: DeliveryMethod;
   placing: boolean;
@@ -658,7 +665,12 @@ function ReviewStep({
       </div>
 
       <div className="mt-6">
-        <CouponField subtotal={subtotal} applied={coupon} onApply={onCoupon} />
+        <CouponField
+          subtotal={subtotal}
+          applied={coupon}
+          onApply={onCoupon}
+          staleError={couponError}
+        />
       </div>
 
       {error && (

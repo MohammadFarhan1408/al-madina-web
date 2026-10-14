@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Container, PageIntro, Price, ButtonLink } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/feedback";
@@ -12,15 +12,14 @@ import {
   type CartItem,
 } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
-import { CouponField } from "@/features/cart/CouponField";
+import { CouponField, useAppliedCoupon } from "@/features/cart/CouponField";
 import { formatAED } from "@/types/catalog";
-import type { CouponPreview } from "@/types/commerce";
 
 export function CartPage() {
   const items = useCartStore((s) => s.items);
   const summary = useMemo(() => computeCartSummary(items), [items]);
 
-  const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const { coupon, apply: setCoupon, error: couponError } = useAppliedCoupon(summary.subtotal);
 
   if (items.length === 0) {
     return (
@@ -62,6 +61,7 @@ export function CartPage() {
                   subtotal={summary.subtotal}
                   applied={coupon}
                   onApply={setCoupon}
+                  staleError={couponError}
                 />
               </div>
 

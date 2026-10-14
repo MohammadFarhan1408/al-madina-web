@@ -34,6 +34,9 @@ interface CartState {
   remove: (productId: string, volumeMl?: number) => void;
   replace: (items: CartItem[]) => void;
   clear: () => void;
+  /** Applied promo code — persisted so it carries from the bag to checkout. */
+  couponCode: string | null;
+  setCouponCode: (code: string | null) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -74,7 +77,9 @@ export const useCartStore = create<CartState>()(
           ),
         })),
       replace: (items) => set({ items }),
-      clear: () => set({ items: [] }),
+      clear: () => set({ items: [], couponCode: null }),
+      couponCode: null,
+      setCouponCode: (couponCode) => set({ couponCode }),
     }),
     { name: "am_cart" },
   ),

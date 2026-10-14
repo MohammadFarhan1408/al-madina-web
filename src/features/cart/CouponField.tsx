@@ -1,19 +1,55 @@
 "use client";
 
 import { useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { couponsService } from "@/services/coupons.service";
 import { getErrorMessage } from "@/lib/api/types";
+import { queryKeys } from "@/lib/query/keys";
+import { useCartStore } from "@/store/cart.store";
 import type { CouponPreview } from "@/types/commerce";
+
+/**
+ * The bag's applied coupon, re-validated against the current subtotal so the
+ * discount tracks quantity changes and survives the trip to checkout. The
+ * server re-checks it again when the order is placed.
+ */
+export function useAppliedCoupon(subtotal: number) {
+  const code = useCartStore((s) => s.couponCode);
+  const setCode = useCartStore((s) => s.setCouponCode);
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: queryKeys.coupon(code ?? "", subtotal),
+    queryFn: () => couponsService.validate(code!, subtotal),
+    enabled: !!code && subtotal > 0,
+    placeholderData: keepPreviousData,
+    retry: false,
+    staleTime: 60 * 1000,
+  });
+  const coupon = code && !query.isError && query.data?.valid ? query.data : null;
+  const apply = (c: CouponPreview | null) => {
+    if (c) qc.setQueryData(queryKeys.coupon(c.coupon.code, subtotal), c);
+    setCode(c?.coupon.code ?? null);
+  };
+  // e.g. the bag dropped below the coupon's minimum purchase.
+  const error =
+    code && query.isError
+      ? getErrorMessage(query.error, `${code} no longer applies to your bag.`)
+      : null;
+  return { coupon, apply, error };
+}
 
 /** Promo-code entry shared by the cart and checkout (no outer margin — callers space it). */
 export function CouponField({
   subtotal,
   applied,
   onApply,
+  staleError,
 }: {
   subtotal: number;
   applied: CouponPreview | null;
   onApply: (c: CouponPreview | null) => void;
+  /** Why a previously applied code stopped applying. */
+  staleError?: string | null;
 }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +110,9 @@ export function CouponField({
           {loading ? "…" : "Apply"}
         </button>
       </div>
-      {error && <p className="mt-2 font-ui text-xs text-burgundy">{error}</p>}
+      {(error ?? staleError) && (
+        <p className="mt-2 font-ui text-xs text-burgundy">{error ?? staleError}</p>
+      )}
     </div>
   );
 }
