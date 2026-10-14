@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { useCartStore } from "@/store/cart.store";
+import { formatAED, type Product } from "@/types/catalog";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { useFrameSequence } from "./hero/useFrameSequence";
 import { FrameCanvas } from "./hero/FrameCanvas";
@@ -27,7 +30,7 @@ function MaskLine({
   );
 }
 
-export function CinematicHero() {
+export function CinematicHero({ product }: { product: Product | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -50,8 +53,8 @@ export function CinematicHero() {
         scrollTrigger: {
           trigger: stage,
           start: "top top",
-          end: () => "+=" + window.innerHeight * 6,
-          scrub: 1,
+          end: () => "+=" + window.innerHeight * 3.5,
+          scrub: 0.5,
           pin: stage,
           pinSpacing: true,
           anticipatePin: 1,
@@ -78,7 +81,7 @@ export function CinematicHero() {
   const leftInner = reduced ? "flex flex-col gap-20" : "relative h-full";
   const groupCls = reduced
     ? "relative"
-    : "absolute inset-0 flex flex-col justify-center";
+    : "absolute inset-0 flex flex-col justify-end pb-36 md:justify-center md:pb-0";
 
   return (
     <section ref={containerRef} className="relative bg-rich-black">
@@ -94,6 +97,10 @@ export function CinematicHero() {
               "linear-gradient(90deg, rgba(11,11,11,0.86) 0%, rgba(11,11,11,0.28) 32%, rgba(11,11,11,0) 52%), linear-gradient(0deg, rgba(11,11,11,0.7) 0%, rgba(11,11,11,0) 26%)",
           }}
         />
+        {/* phones: the bottle fills the frame, so copy needs its own base scrim */}
+        {!reduced && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[62%] bg-linear-to-t from-rich-black via-rich-black/80 to-transparent md:hidden" />
+        )}
         {reduced && (
           <div className="pointer-events-none absolute inset-0 z-10 bg-rich-black/70" />
         )}
@@ -108,7 +115,7 @@ export function CinematicHero() {
               <SignatureCopy anim={!reduced} />
             </div>
             <div className={groupCls}>
-              <CtaCopy anim={!reduced} />
+              <CtaCopy anim={!reduced} product={product} />
             </div>
           </div>
         </div>
@@ -231,8 +238,29 @@ function SignatureCopy({ anim = false }: { anim?: boolean }) {
   );
 }
 
-function CtaCopy({ anim = false }: { anim?: boolean }) {
+function CtaCopy({
+  anim = false,
+  product,
+}: {
+  anim?: boolean;
+  product: Product | null;
+}) {
   const a = (n: string) => (anim ? n : undefined);
+  const addToCart = useCartStore((s) => s.add);
+  const [added, setAdded] = useState(false);
+
+  // Same default as the product page: first in-stock size, else the base product.
+  const variant = product?.variants?.find((v) => v.inStock);
+  const canBuy = !!product && (variant ? true : product.inStock);
+  const price = variant?.price ?? product?.price;
+
+  const handleAdd = () => {
+    if (!product || !canBuy) return;
+    addToCart(product, 1, variant?.volumeMl);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
   return (
     <div>
       <p data-anim={a("cta-line")} className="overline mb-5">
@@ -247,18 +275,23 @@ function CtaCopy({ anim = false }: { anim?: boolean }) {
         written in <span className="italic text-antique-gold">shadow.</span>
       </p>
       <div data-anim={a("cta-line")} className="mt-9 flex flex-wrap items-center gap-4">
-        <a
-          href="#featured"
+        <Link
+          href={product ? `/product/${product.id}` : "#featured"}
           className="group inline-flex items-center gap-3 border border-antique-gold bg-antique-gold px-7 py-3.5 font-ui text-sm font-medium uppercase tracking-[0.18em] text-rich-black transition-colors hover:bg-gold-bright"
         >
           Discover Oud Black
-        </a>
-        <button
-          type="button"
-          className="inline-flex items-center gap-3 border border-bronze/60 px-7 py-3.5 font-ui text-sm font-medium uppercase tracking-[0.18em] text-ivory transition-colors hover:border-antique-gold hover:text-antique-gold"
-        >
-          Add to Bag — AED 480
-        </button>
+        </Link>
+        {canBuy && price !== undefined && (
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="inline-flex items-center gap-3 border border-bronze/60 px-7 py-3.5 font-ui text-sm font-medium uppercase tracking-[0.18em] text-ivory transition-colors hover:border-antique-gold hover:text-antique-gold"
+          >
+            <span aria-live="polite">
+              {added ? "Added to Bag" : `Add to Bag — ${formatAED(price)}`}
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

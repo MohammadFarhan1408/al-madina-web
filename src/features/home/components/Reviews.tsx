@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/Reveal";
+import { Rating } from "@/components/ui/primitives";
 import { productsServer } from "@/services/products.server";
 import type { Review } from "@/types/catalog";
 
@@ -42,9 +43,7 @@ export async function Reviews() {
               className="flex flex-col justify-between bg-rich-black p-8 sm:p-10"
             >
               <div>
-                <p className="font-ui text-sm tracking-[0.3em] text-antique-gold">
-                  {"★".repeat(r.rating)}
-                </p>
+                <Rating value={r.rating} className="text-sm" />
                 <h3 className="mt-5 font-display text-2xl leading-snug text-ivory">
                   {r.title}
                 </h3>

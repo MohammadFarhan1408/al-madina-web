@@ -16,15 +16,17 @@ const ACCENT: Record<
     border: "border-antique-gold/40",
     glow: "radial-gradient(80% 60% at 50% 0%, rgba(200,162,75,0.16), transparent 70%)",
   },
+  // Emerald/burgundy are too dark to read on charcoal — they colour the frame
+  // and glow; label + hover text use champagne.
   emerald: {
-    text: "text-emerald",
-    linkHover: "group-hover:text-emerald",
+    text: "text-champagne",
+    linkHover: "group-hover:text-champagne",
     border: "border-emerald/50",
     glow: "radial-gradient(80% 60% at 50% 0%, rgba(27,122,77,0.20), transparent 70%)",
   },
   burgundy: {
-    text: "text-burgundy",
-    linkHover: "group-hover:text-burgundy",
+    text: "text-champagne",
+    linkHover: "group-hover:text-champagne",
     border: "border-burgundy/50",
     glow: "radial-gradient(80% 60% at 50% 0%, rgba(124,36,56,0.24), transparent 70%)",
   },
@@ -88,7 +90,7 @@ export async function ShopByFamily() {
                 <Reveal
                   key={c.id}
                   delay={i * 100}
-                  className={`group relative flex min-h-88 flex-col justify-between overflow-hidden border ${a.border} bg-charcoal/60 p-8 transition-colors hover:bg-charcoal`}
+                  className={`group relative flex min-h-64 flex-col justify-between md:min-h-88 overflow-hidden border ${a.border} bg-charcoal/60 p-8 transition-colors hover:bg-charcoal`}
                 >
                   <div
                     className="pointer-events-none absolute inset-0 opacity-70"
@@ -131,12 +133,12 @@ export async function ShopByFamily() {
               <Link
                 key={f.family}
                 href={`/shop?family=${f.family}`}
-                className="group inline-flex items-baseline gap-2 border border-bronze/25 px-4 py-2 transition-colors hover:border-antique-gold/60"
+                className="group inline-flex min-h-11 items-center gap-2 border border-bronze/25 px-4 py-2 transition-colors hover:border-antique-gold/60"
               >
                 <span className="font-display text-lg text-ivory group-hover:text-antique-gold">
                   {f.label}
                 </span>
-                <span className="font-ui text-[0.65rem] tabular-nums text-bronze">
+                <span className="font-ui text-xs tabular-nums text-stone">
                   {f.count}
                 </span>
               </Link>

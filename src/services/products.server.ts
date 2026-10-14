@@ -22,6 +22,12 @@ export const productsServer = {
       revalidate,
     }),
 
+  search: (q: string, limit = 10, revalidate = 600) =>
+    serverGet<Paginated<Product>>(endpoints.products.search, {
+      query: { q, limit },
+      revalidate,
+    }),
+
   rail: (
     kind: "featured" | "new-arrivals" | "best-sellers" | "signature" | "seasonal",
     revalidate = 600,

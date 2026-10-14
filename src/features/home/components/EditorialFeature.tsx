@@ -33,7 +33,7 @@ export async function EditorialFeature() {
             <h2 className="mt-5 font-display text-5xl leading-[0.95] text-ivory sm:text-7xl">
               {hero.name}
             </h2>
-            <p className="mt-6 font-editorial text-xl italic leading-relaxed text-ivory-dim">
+            <p className="mt-6 font-editorial text-lg italic leading-relaxed text-ivory-dim sm:text-xl">
               {hero.description}
             </p>
             <p className="mt-6 font-ui text-xs uppercase tracking-[0.28em] text-antique-gold">
