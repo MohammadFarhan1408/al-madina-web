@@ -10,7 +10,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await productsServer.detail(id).catch(() => null);
   if (!product) return { title: "Fragrance" };
   return {
-    title: product.name,
+    title: product.metaTitle || product.name,
+    keywords: product.metaKeywords,
     description:
       product.metaDescription ||
       product.description ||

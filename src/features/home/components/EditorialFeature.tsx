@@ -1,10 +1,20 @@
+import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
+import { productsServer } from "@/services/products.server";
 import { formatAED } from "@/types/catalog";
-import { featuredProducts } from "../data/home-content";
 
-const hero = featuredProducts[0]; // Oud Black
+// The bottle render is brand art; used when the product has no photography.
+const RENDER = "/animations/oud-black/desktop/frame-125.jpg";
 
-export function EditorialFeature() {
+export async function EditorialFeature() {
+  // Spotlight the first signature fragrance; fall back to the top best-seller.
+  // No mock fallback — omit the section rather than link to a fake product.
+  const signature = await productsServer.rail("signature").catch(() => null);
+  const hero =
+    signature?.[0] ??
+    (await productsServer.rail("best-sellers").catch(() => null))?.[0];
+  if (!hero) return null;
+
   return (
     <section
       id="journal"
@@ -14,8 +24,8 @@ export function EditorialFeature() {
         {/* image side — the real bottle render */}
         <div className="relative order-2 min-h-[24rem] overflow-hidden lg:order-1 lg:min-h-[42rem]">
           <img
-            src="/animations/oud-black/desktop/frame-125.jpg"
-            alt="Al Madina Ittar Oud Black bottle mid-spray."
+            src={hero.images[0] ?? RENDER}
+            alt={`Al Madina Ittar ${hero.name}.`}
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-linear-to-t from-obsidian via-transparent to-transparent lg:bg-linear-to-r" />
@@ -26,7 +36,7 @@ export function EditorialFeature() {
           <Reveal className="max-w-lg">
             <p className="overline">The Icon</p>
             <h2 className="mt-5 font-display text-5xl leading-[0.95] text-ivory sm:text-7xl">
-              Oud Black
+              {hero.name}
             </h2>
             <p className="mt-6 font-editorial text-xl italic leading-relaxed text-ivory-dim">
               {hero.description}
@@ -39,12 +49,12 @@ export function EditorialFeature() {
               <span className="font-display text-3xl text-ivory">
                 {formatAED(hero.price)}
               </span>
-              <a
-                href={`#${hero.slug}`}
+              <Link
+                href={`/product/${hero.id}`}
                 className="inline-flex items-center gap-3 bg-antique-gold px-8 py-4 font-ui text-sm font-medium uppercase tracking-[0.18em] text-rich-black transition-colors hover:bg-gold-bright"
               >
                 Discover the Icon
-              </a>
+              </Link>
             </div>
           </Reveal>
         </div>

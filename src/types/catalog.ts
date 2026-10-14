@@ -1,7 +1,5 @@
 /**
- * Catalog types mirror the al-madina-api response contracts so a later
- * `lib/api.ts` + TanStack Query layer can drop in without reshaping data.
- * Homepage (Phase 1) feeds these from static mock content.
+ * Catalog types mirror the al-madina-api response contracts.
  */
 
 export type ScentFamily =
@@ -52,7 +50,7 @@ export interface Product {
   slug?: string;
   metaTitle?: string;
   metaDescription?: string;
-  metaKeywords?: string;
+  metaKeywords?: string[];
 }
 
 export interface Category {
@@ -63,6 +61,9 @@ export interface Category {
   productCount: number;
   sortOrder: number;
   slug?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
 }
 
 export interface Collection {
@@ -75,6 +76,9 @@ export interface Collection {
   productCount: number;
   sortOrder: number;
   slug?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
 }
 
 export interface Review {
