@@ -70,5 +70,7 @@ export const endpoints = {
   newsletter: "/newsletter",
 } as const;
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001/v1";
+// Trailing slash stripped: callers append "/path", and "/v1//path" 404s.
+export const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001/v1"
+).replace(/\/+$/, "");

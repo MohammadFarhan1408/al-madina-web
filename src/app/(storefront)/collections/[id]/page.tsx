@@ -9,8 +9,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const collection = await collectionsServer.detail(id).catch(() => null);
   if (!collection) return { title: "Collection" };
   return {
-    title: collection.title,
-    description: collection.subtitle,
+    title: collection.metaTitle || collection.title,
+    description: collection.metaDescription || collection.subtitle,
+    keywords: collection.metaKeywords,
   };
 }
 

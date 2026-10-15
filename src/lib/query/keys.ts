@@ -20,6 +20,7 @@ export const queryKeys = {
   collectionProducts: (id: string) => ["collection", id, "products"] as const,
 
   cart: ["cart"] as const,
+  coupon: (code: string, subtotal: number) => ["coupon", code, subtotal] as const,
   wishlist: ["wishlist"] as const,
 
   orders: (params?: unknown) => ["orders", params ?? {}] as const,

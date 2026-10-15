@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Container, PageIntro } from "@/components/ui/primitives";
+import { Container, PageIntro, chip } from "@/components/ui/primitives";
 import { ProductGrid } from "@/components/ui/ProductGrid";
 import { useProducts, useCategories, flattenProducts } from "@/hooks/queries/use-catalog";
 import type { ProductSort } from "@/services/products.service";
@@ -198,12 +198,4 @@ export function ShopPage({
       </Container>
     </main>
   );
-}
-
-function chip(active: boolean) {
-  return `border px-4 py-2 font-ui text-xs uppercase tracking-[0.16em] capitalize transition-colors ${
-    active
-      ? "border-antique-gold text-antique-gold"
-      : "border-bronze/25 text-ivory/70 hover:border-antique-gold/60 hover:text-ivory"
-  }`;
 }

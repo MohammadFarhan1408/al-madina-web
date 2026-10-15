@@ -94,6 +94,8 @@ export interface Order {
   userId?: string | null;
   guestEmail?: string;
   status: OrderStatus;
+  /** Every status change, oldest first. Empty on orders placed before it existed. */
+  statusHistory?: { status: OrderStatus; at: string }[];
   paymentStatus: PaymentStatus;
   shippingAddress: ShippingAddress;
   deliveryMethod: DeliveryMethod;

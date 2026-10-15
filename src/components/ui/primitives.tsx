@@ -182,3 +182,12 @@ export function Badge({ children }: { children: React.ReactNode }) {
     </span>
   );
 }
+
+/** Filter chip (shop families, order status). */
+export function chip(active: boolean) {
+  return `border px-4 py-2 font-ui text-xs uppercase tracking-[0.16em] capitalize transition-colors ${
+    active
+      ? "border-antique-gold text-antique-gold"
+      : "border-bronze/25 text-ivory/70 hover:border-antique-gold/60 hover:text-ivory"
+  }`;
+}

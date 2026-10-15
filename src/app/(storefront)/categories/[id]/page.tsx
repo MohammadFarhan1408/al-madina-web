@@ -9,7 +9,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const category = await categoriesServer.detail(id).catch(() => null);
   if (!category) return { title: "Category" };
-  return { title: category.name, description: category.tagline };
+  return {
+    title: category.metaTitle || category.name,
+    description: category.metaDescription || category.tagline,
+    keywords: category.metaKeywords,
+  };
 }
 
 export default async function Page({ params }: Props) {

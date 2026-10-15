@@ -24,6 +24,8 @@
   --color-champagne: #e8d7a8;
   --color-champagne-soft: #f0e6cc;
   --color-sand: #e5ddcb;
+  /* Muted warm grey for secondary copy — mirrors mobile Palette.stone. */
+  --color-stone: #b8ae97;
   --color-ivory-dim: #eee8d9;
   --color-ivory: #f7f3ea;
   --color-pearl: #fbf9f3;
