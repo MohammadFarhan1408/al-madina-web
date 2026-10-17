@@ -6,6 +6,7 @@ import { BrandStory } from "@/features/home/components/BrandStory";
 import { EditorialFeature } from "@/features/home/components/EditorialFeature";
 import { Reviews } from "@/features/home/components/Reviews";
 import { Newsletter } from "@/features/home/components/Newsletter";
+import { AppDownload } from "@/features/home/components/AppDownload";
 import { getHeroProduct } from "@/features/home/spotlight";
 
 // Header + footer are provided by the (storefront) group layout so every page
@@ -21,6 +22,7 @@ export async function HomePage() {
       <BrandStory />
       <EditorialFeature />
       <Reviews />
+      <AppDownload />
       <Newsletter />
     </main>
   );
