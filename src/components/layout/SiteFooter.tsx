@@ -17,6 +17,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Our Story", href: "/about" },
       { label: "Contact", href: "/contact" },
       { label: "My Account", href: "/account" },
+      { label: "Get the App", href: "/#app" },
     ],
   },
   {
