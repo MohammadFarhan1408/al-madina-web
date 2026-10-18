@@ -21,7 +21,7 @@ const FEATURES = [
 /**
  * "Carry the Maison" — invites visitors to install the Al Madina Ittar app.
  * Left: a phone frame showing a real screenshot of the app. Right: copy, real feature list and iPhone / Android downloads
- * (links configured in `lib/app-download.ts`, served from `public/download/`).
+ * (links configured in `lib/app-download.ts`).
  */
 export function AppDownload() {
   return (
